@@ -2,6 +2,35 @@ name: Daily Code Run
 
 on:
   schedule:
-    # This runs at 00:00 UTC every day
-    - cron: '0 0 * * *'
+    # This runs at 09:15 IST (03:45 UTC) every weekday - before market opens
+    - cron: '45 3 * * 1-5'
   workflow_dispatch: # Allows you to also run it manually for testing
+
+jobs:
+  daily_scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance pandas numpy ta
+      
+      - name: Run NIFTY50 Scanner
+        run: python nifty_scanner.py
+      
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: scan-results
+          path: scan_results.txt
+          retention-days: 7
