@@ -2,8 +2,8 @@ name: Daily Code Run
 
 on:
   schedule:
-    # This runs at 09:15 IST (03:45 UTC) every weekday - before market opens
-    - cron: '45 3 * * 1-5'
+      # This runs at 4:00 PM IST (10:30 AM UTC) every day
+    - cron: '30 10 * * *'
   workflow_dispatch: # Allows you to also run it manually for testing
 
 env:
