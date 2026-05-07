@@ -6,16 +6,19 @@ on:
     - cron: '45 3 * * 1-5'
   workflow_dispatch: # Allows you to also run it manually for testing
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   daily_scan:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.0
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5.2.0
         with:
           python-version: '3.10'
       
@@ -32,7 +35,7 @@ jobs:
       
       - name: Upload results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.4.3
         with:
           name: scan-results
           path: scan_results.txt
