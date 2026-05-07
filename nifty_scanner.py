@@ -1,8 +1,7 @@
 # ===============================================================
 # NIFTY50 ELITE LONG + SHORT SWING SCANNER
 # ATR BASED STOP LOSS + ATR BASED TARGET
-# ---------------------------------------------------------------
-# HIGH PROBABILITY ONLY
+# WITH TELEGRAM NOTIFICATIONS
 # ===============================================================
 
 import yfinance as yf
@@ -13,6 +12,8 @@ from ta.momentum import RSIIndicator
 from ta.volatility import AverageTrueRange
 from ta.volume import OnBalanceVolumeIndicator
 from datetime import datetime
+import requests
+import os
 
 # ===============================================================
 # CONFIG
@@ -26,6 +27,38 @@ MIN_SCORE = 88
 # ATR MULTIPLIERS
 SL_ATR = 1.5                # stop = 1.5 ATR
 TP_ATR = 4.5                # target = 4.5 ATR (1:3 RR)
+
+# TELEGRAM CONFIG
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+# ===============================================================
+# TELEGRAM FUNCTION
+# ===============================================================
+
+def send_telegram_message(message):
+    """Send message to Telegram"""
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("⚠️  Telegram credentials not found in environment variables")
+        return False
+    
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+        response = requests.post(url, json=payload)
+        if response.status_code == 200:
+            print("✅ Message sent to Telegram!")
+            return True
+        else:
+            print(f"❌ Failed to send Telegram message: {response.text}")
+            return False
+    except Exception as e:
+        print(f"❌ Error sending Telegram message: {str(e)}")
+        return False
 
 # ===============================================================
 # NIFTY50
@@ -257,7 +290,7 @@ df = pd.DataFrame(results)
 
 output = []
 output.append("="*60)
-output.append("      NIFTY50 ELITE ATR SWING TRADE SETUPS")
+output.append("🚀 NIFTY50 ELITE ATR SWING TRADE SETUPS")
 output.append("="*60)
 output.append("")
 
@@ -280,3 +313,31 @@ with open("scan_results.txt", "w") as f:
     f.write(output_text)
 
 print("\n✅ Results saved to scan_results.txt")
+
+# ===============================================================
+# SEND TO TELEGRAM
+# ===============================================================
+
+# Format message for Telegram (with HTML formatting)
+telegram_message = f"<b>🚀 NIFTY50 SWING SIGNALS</b>\n\n"
+
+if len(df) == 0:
+    telegram_message += "❌ No high probability setups today."
+else:
+    for idx, row in df.iterrows():
+        signal_emoji = "🟢" if row["Side"] == "LONG" else "🔴"
+        telegram_message += f"""
+{signal_emoji} <b>{row['Stock'].replace('.NS', '')}</b>
+Side: <b>{row['Side']}</b>
+Entry: ₹{row['Entry']}
+SL: ₹{row['SL']}
+TP: ₹{row['TP']}
+Qty: {row['Qty']}
+Score: {row['Score']}/100
+
+"""
+
+telegram_message += f"\n⏰ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+# Send to Telegram
+send_telegram_message(telegram_message)
