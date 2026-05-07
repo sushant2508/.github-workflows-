@@ -1,0 +1,7 @@
+name: Daily Code Run
+
+on:
+  schedule:
+    # This runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows you to also run it manually for testing
